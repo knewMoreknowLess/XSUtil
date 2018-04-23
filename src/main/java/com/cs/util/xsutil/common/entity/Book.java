@@ -51,6 +51,9 @@ public class Book {
     //小说尾部分
     private String book_tail;
 
+    //是否分卷
+    private boolean is_volume;
+
     //小说章节解析正则
     private String book_reg;
 
@@ -60,6 +63,14 @@ public class Book {
 
     public void setBook_reg(String book_reg) {
         this.book_reg = book_reg;
+    }
+
+    public boolean isIs_volume() {
+        return is_volume;
+    }
+
+    public void setIs_volume(boolean is_volume) {
+        this.is_volume = is_volume;
     }
 
     public String getBook_encode() {

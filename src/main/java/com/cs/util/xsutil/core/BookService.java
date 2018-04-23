@@ -56,14 +56,10 @@ public class BookService {
         Map map = getChapterListbyString(getFileString);
         book.setBook_head((String)map.get("head"));
         book.setVolumes((List<Volume>) map.get("volumes"));
+        if (book.getVolumes().size() > 1)
+            book.setIs_volume(true);
         System.out.println("小说解析完毕！");
-        //去除小说重复
-        System.out.println("开始去除重复章节。。。");
-        List<String> removeInfo = duplicateRemoval(book);
-        for (String info : removeInfo){
-            System.out.println(info);
-        }
-        System.out.println("重复章节去除完毕！");
+
         return new MessageExposer(CommonMessage.success.code,CommonMessage.success.message,book);
     }
 
@@ -128,27 +124,36 @@ public class BookService {
         return new MessageExposer(CommonMessage.success.code,CommonMessage.success.message);
     }
 
-    //去重复
+    /**
+     * 小说对象去重复
+     * @param book
+     * @return 去重复信息集合
+     */
     public List<String> duplicateRemoval(Book book){
         List<Volume> volumes = book.getVolumes();
         List<String> removeInfo = new ArrayList<>();
         //循环解析卷
         for (Volume volume : volumes){
             List<Chapter> chapters = volume.getChapters();
-            List<Chapter> newChapters = new ArrayList<>();
             int i;
             for (i = 0;i<chapters.size();i++){
                 Chapter chapter1 = chapters.get(i);
                 for(int j=i+1;j<chapters.size()-i-1;j++){
+                    if(j>=chapters.size()){
+                        continue;
+                    }
                     Chapter chapter2 = chapters.get(j);
                     if(chapter1.equals(chapter2)){
+                        if(chapter2.getWordNum() > chapter1.getWordNum()){
+                            chapters.set(i,chapter2);
+                            chapters.set(j,chapter1);
+                        }
                         chapters.remove(j);
                         removeInfo.add(chapter1.getChapter_num()+" "+chapter1.getChapter_name() + " 出现重复，已移除重复章节");
                     }
                 }
-                newChapters.add(chapter1);
             }
-            volume.setChapters(newChapters);
+            volume.setChapters(chapters);
         }
         if(removeInfo.size()<1){
             removeInfo.add("未发现重复章节！");
@@ -156,6 +161,43 @@ public class BookService {
         return removeInfo;
     }
 
+
+    public List<String> charpterSortCheck(Book book){
+        List<String> msg = new ArrayList<>();
+        int checkDepth = 10;
+        for (Volume volume : book.getVolumes()){
+            List<Chapter> chapters = volume.getChapters();
+            for (int i = 0;i<chapters.size();i++){
+                Chapter currentChapter = chapters.get(i);
+                //检测当前章节上五章重复情况
+                boolean isErrorSort = false;
+                int errorSortCount = 0;
+                int c_num = StringUtil.chToint(currentChapter.getCh_ano());
+                for(int j = 1;j<checkDepth+1;j++){
+                    if((i-j)<=0){
+                        break;
+                    }
+                    Chapter c = chapters.get(i-j);
+                    int f_num = StringUtil.chToint(c.getCh_ano());
+                    if(c_num < f_num){
+                        if(j==1){//如果该章和前一章节排序不对，该章排序标识排序异常
+                            isErrorSort = true;
+                        }
+                        errorSortCount++;//和前面章节排序不对加一
+                    }
+                }
+                //如果该章和前面checkDepth数量的章节排序都不对，则 排除异常（有可能分卷解析失败，所以不定为异常）
+                if(isErrorSort && (errorSortCount<checkDepth)){
+                    String s = book.isIs_volume()?"第"+(volume.getAno()+1) + "卷 " + currentChapter.getChapter_num()+" "+currentChapter.getChapter_name()+" 排序异常":currentChapter.getChapter_num()+" "+currentChapter.getChapter_name()+" 排序异常";
+                    msg.add(s);
+                }
+            }
+        }
+        if (msg.size()<1){
+            msg.add("未发现排序异常章节！");
+        }
+        return msg;
+    }
 
     private String getFromat(String name){
         return "txt";
@@ -201,7 +243,7 @@ public class BookService {
                         if(isFirstVolume){
                             chapter.setChapter_context(buffer.toString());
                             buffer = new StringBuffer();
-                            chapter.setWordNum(chapter.getWordNum());
+                            chapter.setWordNum(StringUtil.chineseNums(chapter.getChapter_context()));
                             //将该章节加入章节列表
                             chapters.add(chapter);
                             isFirstVolume=false;
@@ -210,7 +252,7 @@ public class BookService {
                     }else {
                         chapter.setChapter_context(buffer.toString());
                         buffer = new StringBuffer();
-                        chapter.setWordNum(chapter.getWordNum());
+                        chapter.setWordNum(StringUtil.chineseNums(chapter.getChapter_context()));
                         //将该章节加入章节列表
                         chapters.add(chapter);
                     }
@@ -225,10 +267,19 @@ public class BookService {
                         int groupCount = m.groupCount();
                         //章节序号
                         chapter.setChapter_num(m.group(1));
-                        if(groupCount>=2){
+                        if(reg.contains("序")){
+                            if(groupCount==2){
+                                String g2 = m.group(2);
+                                chapter.setChapter_name(g2);
+                            }
+                        }else {
                             //章节名
                             String g2 = m.group(2);
-                            chapter.setChapter_name(g2);
+                            chapter.setCh_ano(g2);
+                            if(groupCount>=3) {
+                                String g3 = m.group(3);
+                                chapter.setChapter_name(g3);
+                            }
                         }
                     }
                 }
@@ -237,7 +288,7 @@ public class BookService {
                 //将当前章加入章节集合
                 chapter.setChapter_context(buffer.toString());
                 buffer = new StringBuffer();
-                chapter.setWordNum(chapter.getWordNum());
+                chapter.setWordNum(StringUtil.chineseNums(chapter.getChapter_context()));
                 chapters.add(chapter);
                 //将当前章节集合加入第一卷
                 volume.setChapters(chapters);
@@ -268,7 +319,7 @@ public class BookService {
         }
         //将未加入的章和卷 加入
         chapter.setChapter_context(buffer.toString());
-        chapter.setWordNum(chapter.getWordNum());
+        chapter.setWordNum(StringUtil.chineseNums(chapter.getChapter_context()));
         chapters.add(chapter);
         volume.setChapters(chapters);
         volumes.add(volume);
@@ -338,6 +389,7 @@ public class BookService {
         return map;
     }
 
+    //解析字符串为章
     public List<Chapter> getChaptersByString(String volumes_content){
         List<Chapter> chapters = new ArrayList<>();
         if(StringUtil.isBlank(volumes_content)){
@@ -359,8 +411,8 @@ public class BookService {
                 //通过该方法判断改行是否为新章节
                 chapter.setChapter_context(chapter.getChapter_context()+"\r\n"+line);
 
-            }else {//该行为卷，找到对应的正则
-                //将该卷加入卷集合
+            }else {//该行为章，找到对应的正则
+                //将该章加入章集合
                 chapter.setWordNum(chapter.getWordNum());
                 chapters.add(chapter);
                 int ano = chapter.getAno();
@@ -373,10 +425,20 @@ public class BookService {
                     int groupCount = m.groupCount();
                     //卷序号
                     chapter.setChapter_num(m.group(1));
-                    if(groupCount>=2){
-                        //卷名
+                    if(chapterReg.contains("序")){
+                        if(groupCount==2){
+                            String g2 = m.group(2);
+                            chapter.setChapter_name(g2);
+                        }
+                        chapter.setCh_ano("零");
+                    }else {
+                        //章节名
                         String g2 = m.group(2);
-                        chapter.setChapter_name(g2);
+                        chapter.setCh_ano(g2);
+                        if(groupCount>=3) {
+                            String g3 = m.group(3);
+                            chapter.setChapter_name(g3);
+                        }
                     }
                 }
             }
@@ -401,11 +463,11 @@ public class BookService {
         regs.add("[ 　]*(序章)[ 　]*");
         regs.add("[ 　]*(序章)[ 　]{0,2}(\\S{1,25})[ 　]*");
 
-        regs.add("[ 　]*(第[\\u4e00-\\u9fa50-9]{1,7}章)[ 　]*");
-        regs.add("[ 　]*(第[\\u4e00-\\u9fa50-9]{1,7}章)[ 　]{0,2}(\\S{1,25})[ 　]*");
+        regs.add("[ 　]*(第([\\u4e00-\\u9fa50-9]{1,7})章)[ 　]*");
+        regs.add("[ 　]*(第([\\u4e00-\\u9fa50-9]{1,7})章)[ 　]{0,2}(\\S{1,25})[ 　]*");
 
-        regs.add("[ 　]*(第[\\u4e00-\\u9fa50-9]{1,7}节)[ 　]*");
-        regs.add("[ 　]*(第[\\u4e00-\\u9fa50-9]{1,7}节)[ 　]{0,2}(\\S{1,25})[ 　]*");
+        regs.add("[ 　]*(第([\\u4e00-\\u9fa50-9]{1,7})节)[ 　]*");
+        regs.add("[ 　]*(第([\\u4e00-\\u9fa50-9]{1,7})节)[ 　]{0,2}(\\S{1,25})[ 　]*");
         return regs;
     }
     //卷名匹配正则

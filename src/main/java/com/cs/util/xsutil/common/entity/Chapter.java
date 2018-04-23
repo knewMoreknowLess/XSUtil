@@ -16,12 +16,25 @@ public class Chapter {
     //章节字数
     private int wordNum;
 
+    //章节名中文序号
+    private String ch_ano;
+
+
+
     public int getWordNum() {
         return wordNum;
     }
 
     public void setWordNum(int wordNum) {
         this.wordNum = wordNum;
+    }
+
+    public String getCh_ano() {
+        return ch_ano;
+    }
+
+    public void setCh_ano(String ch_ano) {
+        this.ch_ano = ch_ano;
     }
 
     public int getAno() {
@@ -35,6 +48,7 @@ public class Chapter {
         this.chapter_context = "";
         this.chapter_name = "";
         this.chapter_num = "";
+        this.ch_ano = "零";
     }
 
     public Chapter(int ano){
