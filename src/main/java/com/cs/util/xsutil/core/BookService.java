@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 @Service
 public class BookService {
 
+    private int checkDepth = 10;
     /**
      * 小说的读取
      * @param book_path
@@ -161,42 +162,112 @@ public class BookService {
         return removeInfo;
     }
 
-
-    public List<String> charpterSortCheck(Book book){
-        List<String> msg = new ArrayList<>();
-        int checkDepth = 10;
+    /**
+     * 检查排序异常章节（该章前checkDepth章以内）
+     * @param book
+     * @return
+     */
+    public List<Chapter> charpterSortCheck(Book book){
+        List<Chapter> msg = new ArrayList<>();
         for (Volume volume : book.getVolumes()){
             List<Chapter> chapters = volume.getChapters();
             for (int i = 0;i<chapters.size();i++){
                 Chapter currentChapter = chapters.get(i);
                 //检测当前章节上五章重复情况
-                boolean isErrorSort = false;
-                int errorSortCount = 0;
-                int c_num = StringUtil.chToint(currentChapter.getCh_ano());
-                for(int j = 1;j<checkDepth+1;j++){
-                    if((i-j)<=0){
-                        break;
-                    }
-                    Chapter c = chapters.get(i-j);
-                    int f_num = StringUtil.chToint(c.getCh_ano());
-                    if(c_num < f_num){
-                        if(j==1){//如果该章和前一章节排序不对，该章排序标识排序异常
-                            isErrorSort = true;
-                        }
-                        errorSortCount++;//和前面章节排序不对加一
-                    }
-                }
-                //如果该章和前面checkDepth数量的章节排序都不对，则 排除异常（有可能分卷解析失败，所以不定为异常）
-                if(isErrorSort && (errorSortCount<checkDepth)){
-                    String s = book.isIs_volume()?"第"+(volume.getAno()+1) + "卷 " + currentChapter.getChapter_num()+" "+currentChapter.getChapter_name()+" 排序异常":currentChapter.getChapter_num()+" "+currentChapter.getChapter_name()+" 排序异常";
-                    msg.add(s);
+                boolean isErrorSort = checkOneChapter(chapters,currentChapter);
+                if(isErrorSort){
+                    msg.add(currentChapter);
                 }
             }
         }
-        if (msg.size()<1){
-            msg.add("未发现排序异常章节！");
-        }
         return msg;
+    }
+
+    public List<String> sort(Book book,List<Chapter> errChapter){
+        List<String> info = new ArrayList<>();
+        if(errChapter.isEmpty()){
+            info.add("没有排序异常的章节");
+            return info;
+        }
+        for (Chapter chapter : errChapter){
+            String s = chapter.getChapter_num()+" "+chapter.getChapter_name()+" 排序异常，正在排序。。。";
+            System.out.println(s);
+            //获取排序异常的章节所在的卷章节列表
+            for(Volume volume : book.getVolumes()){
+                List<Chapter> chapters =volume.getChapters();
+                if(chapters.indexOf(chapter) == -1 || chapters.indexOf(chapter) == 0){
+                    continue;
+                }
+                //调用排序算法，将该章重新排序
+                sortOneChapter(chapters,chapter);
+            }
+            String s1 = chapter.getChapter_num()+" "+chapter.getChapter_name()+" 排序完成！";
+            System.out.println(s1);
+        }
+        return info;
+    }
+
+    /**
+     * 递归将该章位置调换为正确位置
+     * @param chapters
+     * @param chapter
+     */
+    private void sortOneChapter(List<Chapter> chapters,Chapter chapter){
+        boolean isErr = checkOneChapter(chapters,chapter);
+        if(isErr){//如果排序异常,则调换该章和前一章的位置
+            int index = chapters.indexOf(chapter);
+            if(index==-1 || index==0) return;
+            //获取问题章的前一章
+            Chapter c = chapters.get(index-1);
+            chapters.set(index,c);
+            chapters.set(index-1,chapter);
+            //递归调用该排序方法 直到该章排序不异常
+            sortOneChapter(chapters,chapter);
+        }
+    }
+
+    /**
+     * 检查一章是否排序异常
+     * @param chapters
+     * @param currentChapter
+     * @return 排序异常 则ture
+     */
+    private boolean checkOneChapter(List<Chapter> chapters,Chapter currentChapter){
+        boolean isErrorSort = false;
+        int errorSortCount = 0;
+        int i = chapters.indexOf(currentChapter);
+        int c_num = StringUtil.chToint(currentChapter.getCh_ano());
+        for(int j = 1;j<checkDepth+1;j++){
+            if((i-j)<=0){
+                break;
+            }
+            Chapter c = chapters.get(i-j);
+            int f_num = StringUtil.chToint(c.getCh_ano());
+            if(c_num < f_num){
+                if(j==1){//如果该章和前一章节排序不对，该章排序标识排序异常
+                    isErrorSort = true;
+                }
+                errorSortCount++;//和前面章节排序不对加一
+            }
+        }
+        //如果该章和前面checkDepth数量的章节排序都不对，则 排除异常（有可能分卷解析失败，所以不定为异常）
+        if(isErrorSort && (errorSortCount<checkDepth)){
+//            Map m = new HashMap();
+//            String s = currentChapter.getChapter_num()+" "+currentChapter.getChapter_name()+" 排序异常";
+//            m.put("chapter",currentChapter);
+//            m.put("msg",s);
+            //排除章节命名错误情况
+            for(int k= 0;k<i;k++){
+                Chapter c = chapters.get(k);
+                if(c.getChapter_num().equals(currentChapter.getChapter_num())){
+                    //如果之前存在该章节号，则该章不定为排序异常
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        return false;
     }
 
     private String getFromat(String name){
@@ -389,7 +460,7 @@ public class BookService {
         return map;
     }
 
-    //解析字符串为章
+    //解析卷字符串为章
     public List<Chapter> getChaptersByString(String volumes_content){
         List<Chapter> chapters = new ArrayList<>();
         if(StringUtil.isBlank(volumes_content)){
@@ -448,7 +519,7 @@ public class BookService {
         return chapters;
     }
 
-    public String getReg(String line,List<String> regs){
+    private String getReg(String line,List<String> regs){
         for (String reg : regs){
             if(line.matches(reg)){
                 return reg;
