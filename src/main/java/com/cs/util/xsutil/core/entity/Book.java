@@ -1,8 +1,13 @@
-package com.cs.util.xsutil.common.entity;
+package com.cs.util.xsutil.core.entity;
 
+import com.cs.util.xsutil.common.base.BaseEntity;
+
+import javax.persistence.Entity;
+import javax.persistence.Transient;
 import java.util.List;
 
-public class Book {
+@Entity
+public class Book extends BaseEntity{
     //小说名
     private String boox_name;
 
@@ -31,6 +36,7 @@ public class Book {
     private String md5;
 
     //小说内容(卷)
+    @Transient
     private List<Volume> volumes;
 
     //小说存储地址
@@ -43,6 +49,7 @@ public class Book {
     private String book_encode;
 
     //小说文件字符串
+    @Transient
     private String book_content;
 
     //小说头部分

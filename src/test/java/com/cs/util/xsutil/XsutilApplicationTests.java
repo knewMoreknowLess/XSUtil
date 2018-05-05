@@ -1,11 +1,10 @@
 package com.cs.util.xsutil;
 
-import com.cs.util.xsutil.common.entity.Book;
-import com.cs.util.xsutil.common.entity.Chapter;
-import com.cs.util.xsutil.common.enums.CommonMessage;
+import com.cs.util.xsutil.core.entity.Book;
+import com.cs.util.xsutil.core.entity.Chapter;
+import com.cs.util.xsutil.core.other.CommonMessage;
 import com.cs.util.xsutil.common.exposer.MessageExposer;
-import com.cs.util.xsutil.common.util.FileUtils;
-import com.cs.util.xsutil.core.BookService;
+import com.cs.util.xsutil.core.service.BookService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +14,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

@@ -1,9 +1,9 @@
-package com.cs.util.xsutil.core;
+package com.cs.util.xsutil.core.service;
 
-import com.cs.util.xsutil.common.entity.Book;
-import com.cs.util.xsutil.common.entity.Chapter;
-import com.cs.util.xsutil.common.entity.Volume;
-import com.cs.util.xsutil.common.enums.CommonMessage;
+import com.cs.util.xsutil.core.entity.Book;
+import com.cs.util.xsutil.core.entity.Chapter;
+import com.cs.util.xsutil.core.entity.Volume;
+import com.cs.util.xsutil.core.other.CommonMessage;
 import com.cs.util.xsutil.common.enums.TipEnum;
 import com.cs.util.xsutil.common.exposer.MessageExposer;
 import com.cs.util.xsutil.common.util.FileUtils;

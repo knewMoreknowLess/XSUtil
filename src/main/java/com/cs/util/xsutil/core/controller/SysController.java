@@ -12,4 +12,9 @@ public class SysController {
         return "hello "+name;
     }
 
+    @RequestMapping(value = "/swagger")
+    public String index() {
+        System.out.println("swagger-ui.html");
+        return "swagger-ui";
+    }
 }

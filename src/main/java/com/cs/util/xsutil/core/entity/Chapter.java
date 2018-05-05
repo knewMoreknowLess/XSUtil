@@ -1,4 +1,4 @@
-package com.cs.util.xsutil.common.entity;
+package com.cs.util.xsutil.core.entity;
 
 public class Chapter {
     //序号

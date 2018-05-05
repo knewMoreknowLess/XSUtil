@@ -1,11 +1,24 @@
 server:
   port: 8052
-  servlet:
-    path: /xsUtil
+#  servlet:
+#    path: /xsUtil
 spring:
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/test
+    url: jdbc:mysql://127.0.0.1:3306/xsutil
     username: root
     password: kingdee
-
+  jpa:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+    show-sql: true
+  devtools:
+      restart:
+        additional-paths: src/main/java
+springfox:
+  documentation:
+    swagger:
+      v2:
+        path: /api-docs

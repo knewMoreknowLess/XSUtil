@@ -1,4 +1,4 @@
-package com.cs.util.xsutil.common.entity;
+package com.cs.util.xsutil.core.entity;
 
 
 import java.util.ArrayList;
