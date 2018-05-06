@@ -17,8 +17,5 @@ spring:
   devtools:
       restart:
         additional-paths: src/main/java
-springfox:
-  documentation:
-    swagger:
-      v2:
-        path: /api-docs
+sys_config:
+  account_length: 10

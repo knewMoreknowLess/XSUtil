@@ -3,6 +3,7 @@ package com.cs.util.xsutil.common.base;
 import org.springframework.data.domain.PageRequest;
 
 public class ParamsDto {
+    private String targrt;
 
     private String token;
 
@@ -19,6 +20,14 @@ public class ParamsDto {
             return PageRequest.of(startindex,endindex);
         }
         return PageRequest.of(0,25);
+    }
+
+    public String getTargrt() {
+        return targrt;
+    }
+
+    public void setTargrt(String targrt) {
+        this.targrt = targrt;
     }
 
     public int getPageNumber() {

@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 import javax.persistence.Entity;
+import java.util.Date;
 
 /**
  * 用户类
@@ -30,11 +31,17 @@ public class Consumer extends BaseEntity {
     @ApiModelProperty("手机号")
     private String phone_number;
 
+    @ApiModelProperty("账号")
+    private String account;
+
     @ApiModelProperty("密码")
     private String passward;
 
     @ApiModelProperty("token标识")
     private String token;
+
+    @ApiModelProperty("token标识")
+    private Date lastLoginTime;
 
     public Consumer() {
         super();
@@ -42,6 +49,27 @@ public class Consumer extends BaseEntity {
 
     public Consumer(String id) {
         super(id);
+    }
+
+    public Consumer(String account,String passward){
+        this.account = account;
+        this.passward = passward;
+    }
+
+    public Date getLastLoginTime() {
+        return lastLoginTime;
+    }
+
+    public void setLastLoginTime(Date lastLoginTime) {
+        this.lastLoginTime = lastLoginTime;
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
     }
 
     public String getToken() {
