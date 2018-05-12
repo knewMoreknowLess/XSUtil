@@ -121,6 +121,9 @@ public abstract class BaseService<E extends BaseEntity,A extends BaseDao<E>,D>{
         return baseDao.getOne(id);
     }
 
+    public E getById(String id){
+        return baseDao.getByObjId(id);
+    }
 
     /**
      * 默认加上事件排序，避免导致代码混乱，这里这个方法不能公有。

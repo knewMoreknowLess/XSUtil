@@ -3,22 +3,20 @@ package com.cs.util.xsutil.core.controller;
 import com.cs.util.xsutil.common.base.BaseController;
 import com.cs.util.xsutil.common.enums.EnumMessage;
 import com.cs.util.xsutil.common.exposer.MessageExposer;
-import com.cs.util.xsutil.common.util.StringUtil;
 import com.cs.util.xsutil.core.entity.Consumer;
 import com.cs.util.xsutil.core.other.ConsumerDto;
 import com.cs.util.xsutil.core.service.ConsumerService;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.models.Model;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.PrimitiveIterator;
 
-@RestController("consumer")
+@RestController
+@RequestMapping("/consumer")
 public class ConsumerController extends BaseController {
 
     @Value("${sys_config.account_length}")
@@ -69,8 +67,6 @@ public class ConsumerController extends BaseController {
     @RequestMapping(value = "/test",method = RequestMethod.POST)
     public MessageExposer test(ConsumerDto consumerDto, @ModelAttribute("consumer") Consumer consumer) {
 //        consumerService.delete(consumerDto.getConsumer_id());
-        return new MessageExposer(EnumMessage.success.code,EnumMessage.success.message);
+        return new MessageExposer(EnumMessage.success.code,EnumMessage.success.message,"aaaaaa");
     }
-
-
 }

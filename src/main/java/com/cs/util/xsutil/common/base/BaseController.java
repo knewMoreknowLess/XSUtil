@@ -12,8 +12,8 @@ public class BaseController {
 
     @ModelAttribute("consumer")
     public Consumer addUser(ParamsDto paramsDto) {
-        if (StringUtil.isEmpty(paramsDto.getTargrt())) return null;
-        Consumer consumer = consumerService.getOne(paramsDto.getTargrt());
+        if (StringUtil.isEmpty(paramsDto.getTarget())) return null;
+        Consumer consumer = consumerService.getById(paramsDto.getTarget());
         return consumer;
     }
 }
