@@ -48,7 +48,7 @@ public class Chapter {
         this.chapter_context = "";
         this.chapter_name = "";
         this.chapter_num = "";
-        this.ch_ano = "零";
+        this.ch_ano = "0";
     }
 
     public Chapter(int ano){
@@ -56,6 +56,7 @@ public class Chapter {
         this.chapter_context = "";
         this.chapter_name = "";
         this.chapter_num = "";
+        this.ch_ano="0";
     }
 
     public String getChapter_num() {

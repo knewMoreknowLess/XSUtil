@@ -9,7 +9,10 @@ import java.util.List;
 @Entity
 public class Book extends BaseEntity{
     //小说名
-    private String boox_name;
+    private String book_name;
+
+    //小说存储名（MD5+后缀）
+    private String book_md5Name;
 
     //小说字数
     private String book_word_num;
@@ -35,12 +38,18 @@ public class Book extends BaseEntity{
     //小说md5
     private String md5;
 
+    //小说校对后MD5
+    private String CheckMd5;
+
     //小说内容(卷)
     @Transient
     private List<Volume> volumes;
 
     //小说存储地址
     private String book_abPath;
+
+    //小说上传地址
+    private String book_uploadPath;
 
     //小说文件格式
     private String book_format;
@@ -53,9 +62,11 @@ public class Book extends BaseEntity{
     private String book_content;
 
     //小说头部分
+    @Transient
     private String book_head;
 
     //小说尾部分
+    @Transient
     private String book_tail;
 
     //是否分卷
@@ -63,6 +74,22 @@ public class Book extends BaseEntity{
 
     //小说章节解析正则
     private String book_reg;
+
+    public String getCheckMd5() {
+        return CheckMd5;
+    }
+
+    public void setCheckMd5(String checkMd5) {
+        CheckMd5 = checkMd5;
+    }
+
+    public String getBook_uploadPath() {
+        return book_uploadPath;
+    }
+
+    public void setBook_uploadPath(String book_uploadPath) {
+        this.book_uploadPath = book_uploadPath;
+    }
 
     public String getBook_reg() {
         return book_reg;
@@ -74,6 +101,14 @@ public class Book extends BaseEntity{
 
     public boolean isIs_volume() {
         return is_volume;
+    }
+
+    public String getBook_md5Name() {
+        return book_md5Name;
+    }
+
+    public void setBook_md5Name(String book_md5Name) {
+        this.book_md5Name = book_md5Name;
     }
 
     public void setIs_volume(boolean is_volume) {
@@ -120,12 +155,12 @@ public class Book extends BaseEntity{
         this.book_format = book_format;
     }
 
-    public String getBoox_name() {
-        return boox_name;
+    public String getBook_name() {
+        return book_name;
     }
 
-    public void setBoox_name(String boox_name) {
-        this.boox_name = boox_name;
+    public void setBook_name(String book_name) {
+        this.book_name = book_name;
     }
 
     public String getBook_word_num() {

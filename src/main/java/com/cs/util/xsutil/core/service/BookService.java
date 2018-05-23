@@ -1,5 +1,8 @@
 package com.cs.util.xsutil.core.service;
 
+import com.cs.util.xsutil.common.base.BaseService;
+import com.cs.util.xsutil.common.enums.EnumMessage;
+import com.cs.util.xsutil.core.dao.BookDao;
 import com.cs.util.xsutil.core.entity.Book;
 import com.cs.util.xsutil.core.entity.Chapter;
 import com.cs.util.xsutil.core.entity.Volume;
@@ -9,17 +12,15 @@ import com.cs.util.xsutil.common.exposer.MessageExposer;
 import com.cs.util.xsutil.common.util.FileUtils;
 import com.cs.util.xsutil.common.util.StringUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-public class BookService {
+public class BookService extends BaseService<Book,BookDao,String> {
 
     private int checkDepth = 10;
     /**
@@ -27,6 +28,32 @@ public class BookService {
      * @param book_path
      * @return
      */
+
+    /**
+     * 上传多媒体档案文件，不会对文件进行换
+     * @param file name
+     * @return MessageExposer
+     */
+    public MessageExposer uploadBook(MultipartFile file, String name, String gcPath) {
+        try {
+            String kzm = name.substring(name.lastIndexOf(".")+1);
+            String bookName = name.substring(0,name.lastIndexOf("."));
+            String md5 = FileUtils.getFileMd5(file);
+            String fileName = md5 + "."+ kzm;
+            String path = FileUtils.uploadfileDmt(file.getInputStream(), fileName, gcPath);
+            Book book = new Book();
+            book.setBook_name(bookName);
+            book.setBook_format(kzm);
+            book.setBook_abPath(path);
+            book.setBook_uploadPath(path);
+            book.setMd5(md5);
+            return new MessageExposer(EnumMessage.success,book);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new MessageExposer(EnumMessage.error, EnumMessage.error);
+        }
+    }
+
     public MessageExposer readBook(String book_path){
         Book book = new Book();
         //获取小说格式
@@ -37,9 +64,13 @@ public class BookService {
             return new MessageExposer(CommonMessage.success.code, TipEnum.fileNoExists.message);
         }
         //文件名
-        book.setBoox_name(file.getName());
+        book.setBook_name(file.getName());
         //文件大小
         book.setBoox_size((int)file.length());
+        //文件绝对地址
+        book.setBook_abPath(file.getAbsolutePath());
+        //文件父目录地址
+//        book.setBook_parentPath(file.getParent());
         //文件格式编码
         book.setBook_encode(FileUtils.getFilecharset(file));
         String getFileString = "";
@@ -49,6 +80,7 @@ public class BookService {
              getFileString = FileUtils.getFileString(file);
         } catch (Exception e) {
             e.printStackTrace();
+            return new MessageExposer(CommonMessage.error.code, TipEnum.fileReadError.message);
         }
         book.setBook_content(getFileString);
         //解析字符串
@@ -64,18 +96,38 @@ public class BookService {
         return new MessageExposer(CommonMessage.success.code,CommonMessage.success.message,book);
     }
 
+    public MessageExposer readBook(Book book){
+        MessageExposer exposer = readBook(book.getBook_abPath());
+        if("success".equals(exposer.getCode())){
+            Book read = (Book) exposer.getData();
+            //设置书名
+            read.setBook_name(book.getBook_name());
+            //设置书MD5
+            read.setMd5(book.getMd5());
+            //设置书格式
+            read.setBook_format(book.getBook_format());
+            exposer.setData(read);
+            return exposer;
+        }
+        exposer.setData(book);
+        return exposer;
+    }
 
-    /**
-     * 将书本对象 输出到文件
-     * @param book
-     * @param path
-     * @return
-     */
-    public MessageExposer writeToText(Book book,String path) {
+
+        /**
+         * 将书本对象 输出到文件
+         * @param book
+         * @return
+         */
+    public MessageExposer writeToText(Book book) {
+        String path = null;
+        if(book==null) return new MessageExposer(EnumMessage.error,null);
         FileOutputStream out = null;
+        File file = null;
         try {
+            path = FileUtils.getFileParentDir(book.getBook_abPath());
             //创建文件
-            File file = FileUtils.createFileByString(path+File.separator+book.getBoox_name());
+            file = FileUtils.createFileByString(path+File.separator+book.getBook_name()+"."+book.getBook_format());
             //创建输出流
             out = new FileOutputStream(file);
             //写入书本头
@@ -106,13 +158,12 @@ public class BookService {
                     //写入章节内容
                     FileUtils.writeStringtoOutstream(out,chapter.getChapter_context(),book.getBook_encode());
                 }
-
             }
             //写入书结尾
             FileUtils.writeStringtoOutstream(out,book.getBook_tail(),book.getBook_encode());
         } catch (Exception e) {
             e.printStackTrace();
-            return new MessageExposer(CommonMessage.error.code,e.getMessage());
+            return new MessageExposer(CommonMessage.error.code,TipEnum.bookOutError.message);
         }finally {
             if(out != null){
                 try {
@@ -122,7 +173,44 @@ public class BookService {
                 }
             }
         }
+        book.setBook_abPath(file.getAbsolutePath());
         return new MessageExposer(CommonMessage.success.code,CommonMessage.success.message);
+    }
+
+    /**
+     * 书本校对后修改书本信息
+     * @param book
+     */
+    public void updateBookPath(Book book){
+        try {
+//            File file = FileUtils.createFileByString(book.getBook_abPath());
+            //更换存储文件文件名
+            String md5 = FileUtils.getMd5ByFile(book.getBook_abPath());
+//            String md5 = "awdadwadw";
+            book.setCheckMd5(md5);
+            if (md5==null || book.getMd5().equals(md5)){
+                return;
+            }
+            String fileNewName = md5+"."+book.getBook_format();
+            //获取文件新的名字和路径
+            String parent = FileUtils.getFileParentDir(book.getBook_abPath());
+            String fileNewPath = parent+File.separator+fileNewName;
+
+            //修改文件名
+            boolean success = FileUtils.renameTo(book.getBook_abPath(),fileNewPath);
+            if(success){
+                book.setBook_abPath(fileNewPath);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void bookInfoRemove(Book book){
+        book.setBook_head(null);
+        book.setBook_tail(null);
+        book.setBook_content(null);
+        book.setVolumes(null);
     }
 
     /**
@@ -160,6 +248,16 @@ public class BookService {
             removeInfo.add("未发现重复章节！");
         }
         return removeInfo;
+    }
+
+    /**
+     * 简单排序，返回排序信息
+     * @param book
+     * @return
+     */
+    public List<String> bookSort(Book book){
+        List<Chapter> sortInfo = charpterSortCheck(book);
+        return sort(book,sortInfo);
     }
 
     /**
@@ -236,13 +334,23 @@ public class BookService {
         boolean isErrorSort = false;
         int errorSortCount = 0;
         int i = chapters.indexOf(currentChapter);
-        int c_num = StringUtil.chToint(currentChapter.getCh_ano());
+        int c_num = 0;
+        try {
+            c_num = StringUtil.chToint(currentChapter.getCh_ano());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         for(int j = 1;j<checkDepth+1;j++){
             if((i-j)<=0){
                 break;
             }
             Chapter c = chapters.get(i-j);
-            int f_num = StringUtil.chToint(c.getCh_ano());
+            int f_num = 0;
+            try {
+                f_num = StringUtil.chToint(c.getCh_ano());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             if(c_num < f_num){
                 if(j==1){//如果该章和前一章节排序不对，该章排序标识排序异常
                     isErrorSort = true;
@@ -346,7 +454,7 @@ public class BookService {
                         }else {
                             //章节名
                             String g2 = m.group(2);
-                            chapter.setCh_ano(g2);
+                            chapter.setCh_ano(g2==null?"0":g2);
                             if(groupCount>=3) {
                                 String g3 = m.group(3);
                                 chapter.setChapter_name(g3);
@@ -501,11 +609,11 @@ public class BookService {
                             String g2 = m.group(2);
                             chapter.setChapter_name(g2);
                         }
-                        chapter.setCh_ano("零");
+                        chapter.setCh_ano("0");
                     }else {
                         //章节名
                         String g2 = m.group(2);
-                        chapter.setCh_ano(g2);
+                        chapter.setCh_ano(g2==null?"0":g2);
                         if(groupCount>=3) {
                             String g3 = m.group(3);
                             chapter.setChapter_name(g3);

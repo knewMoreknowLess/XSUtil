@@ -54,7 +54,7 @@ public class XsutilApplicationTests {
 			System.out.println("打印小数到指定位置");
 			String basepath = "C:\\Users\\Administrator\\Desktop\\b";
 			bookService.writeToText(book,basepath);
-			System.out.println("成功打印小说至："+basepath+ File.separator +book.getBoox_name());
+			System.out.println("成功打印小说至："+basepath+ File.separator +book.getBook_name());
 
 		}
 
@@ -110,19 +110,10 @@ public class XsutilApplicationTests {
 
 	@Test
 	public void test3(){
-		String c1 = "第二十五章";
-		String c2 = "第二十六章";
-
-		String c3 = "第25章";
-		String c4 = "第26章";
-		String c5 = "第26章aaaaaa";
-//		System.out.println(c2.compareTo(c1));
-//
-//		System.out.println(c4.compareTo(c3));
-
-		System.out.println(chineseNums(c2));
-		System.out.println(chineseNums(c4));
-		System.out.println(chineseNums(c5));
+//		String filePath = "E:\\黑暗主宰.txt";
+		String filePath = "C:\\Users\\Administrator\\Desktop\\黑暗主宰.txt";
+		File file = new File(filePath);
+		System.out.println(file.getParent());
 
 	}
 

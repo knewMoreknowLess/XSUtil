@@ -17,5 +17,10 @@ spring:
   devtools:
       restart:
         additional-paths: src/main/java
+  servlet:
+    multipart:
+      max-file-size: 20Mb
+      max-request-size: 100Mb
 sys_config:
   account_length: 10
+  upload_path: upload

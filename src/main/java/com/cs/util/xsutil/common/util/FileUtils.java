@@ -3,10 +3,13 @@ package com.cs.util.xsutil.common.util;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Properties;
@@ -122,7 +125,7 @@ public class FileUtils {
      * @return
      * @throws Exception
      */
-    public static File createFileByString(String filePath) throws Exception{
+    public static File createFileByString(String filePath) throws IOException{
         File file = new File(filePath);
 
         //判断目标文件所在的目录是否存在
@@ -154,6 +157,18 @@ public class FileUtils {
             return false;
         }
 
+        return fileDelete.delete();
+    }
+    /**
+     * 删除指定的文件
+     *
+     * @param fileDelete 指定绝对路径的文件名
+     * @return 如果删除成功true否则false
+     */
+    public static boolean delete(File fileDelete) {
+        if (!fileDelete.exists() || !fileDelete.isFile()) {
+            return false;
+        }
         return fileDelete.delete();
     }
     /***删除某个目录下的所有文件*/
@@ -188,12 +203,124 @@ public class FileUtils {
         }
     }
 
+    /**
+     * 文件更名
+     * @param filepath
+     * @param newfilepath
+     * @return
+     */
+    public static boolean renameTo(String filepath,String newfilepath){
+        File oldfile = null;
+        File newfile = null;
+        try {
+            oldfile = createFileByString(filepath);
+            newfile = new File(newfilepath);
+            if (newfile.exists()){
+                delete(oldfile);
+                return true;
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return oldfile.renameTo(newfile);
+    }
+
+    /**
+     * 文件拷贝
+     * @param s
+     * @param t
+     */
+    public static boolean fileChannelCopy(File s, File t) {
+        FileInputStream fi = null;
+        FileOutputStream fo = null;
+        FileChannel in = null;
+        FileChannel out = null;
+        try {
+            fi = new FileInputStream(s);
+            fo = new FileOutputStream(t);
+            in = fi.getChannel();//得到对应的文件通道
+            out = fo.getChannel();//得到对应的文件通道
+            in.transferTo(0, in.size(), out);//连接两个通道，并且从in通道读取，然后写入out通道
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (fi!=null){
+                    fi.close();
+                }
+                if(in !=null){
+                    in.close();
+                }
+                if(fo != null) {
+                    fo.close();
+                }
+                if(out != null) {
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public static String getFileMd5(byte[] bytes) throws IOException, NoSuchAlgorithmException {
         MessageDigest md5 = MessageDigest.getInstance("MD5");
         byte[] digest = md5.digest(bytes);
         String strmd5 = new BigInteger(1, digest).toString(16);
         return strmd5;
     }
+
+    public static String getMd5ByFile(String path){
+        File file = new File(path);
+        if(!file.exists()){
+            return null;
+        }
+        FileInputStream in = null;
+        try {
+            in = new FileInputStream(path);
+            return DigestUtils.md5DigestAsHex(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }finally {
+            if (in != null){
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+//    public static String getMd5ByFile(File file){
+//        String value = "";
+//        FileInputStream in = null;
+//        try {
+//            in = new FileInputStream(file);
+//            MappedByteBuffer byteBuffer = in.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, file.length());
+//            MessageDigest md5 = MessageDigest.getInstance("MD5");
+//            md5.update(byteBuffer);
+//            BigInteger bi = new BigInteger(1, md5.digest());
+//            value = bi.toString(16);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return value;
+//        } finally {
+//            if(in != null) {
+//                try {
+//                    in.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//        }
+//        return value;
+//    }
 
     /**
      * 字符串写入文件输出流
@@ -245,22 +372,31 @@ public class FileUtils {
      */
     public static String uploadfileDmt(InputStream inputStream, String filename, String gcPath) throws IOException {
         //String diskPath = PropertiesUtils.sysConfig_instance.get("diskPath");
-        String tempPath = "";
-        if (!tempPath.endsWith("/")) {
-            tempPath += "/";
-        }
-        File dir = new File(gcPath + tempPath);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        String path = tempPath + filename;
-        File newfile = new File(gcPath + path);
-        if (!newfile.exists()) {
-            OutputStream fileOut = new FileOutputStream(newfile);
+        File newfile = null;
+        OutputStream fileOut = null;
+        try {
+            String tempPath = "";
+            if (!tempPath.endsWith("/")) {
+                tempPath += "/";
+            }
+            String path = tempPath + filename;
+            //获取路劲文件对象
+            newfile = createFileByString(gcPath+path);//new File(gcPath + path);
+
+            fileOut = new FileOutputStream(newfile);
+            //数据流写入文件
             IOUtils.copy(inputStream, fileOut);
-            fileOut.close();
+
+        }catch (IOException e){
+            throw e;
+        }finally {
+            if (inputStream!=null){
+                inputStream.close();
+            }
+            if (fileOut!=null){
+                fileOut.close();
+            }
         }
-        inputStream.close();
         return newfile.getAbsolutePath();
     }
 
@@ -285,6 +421,14 @@ public class FileUtils {
             System.out.println("error");
             e.printStackTrace();
         }
+    }
+
+    public static String getFileParentDir(String filePath)throws FileNotFoundException{
+        File file = new File(filePath);
+        if(!file.exists()){
+            throw new FileNotFoundException();
+        }
+        return file.getParent();
     }
 
     /**
