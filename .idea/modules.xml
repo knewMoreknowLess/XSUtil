@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/xsutil.iml" filepath="$PROJECT_DIR$/xsutil.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/xsutil_main.iml" filepath="$PROJECT_DIR$/.idea/modules/xsutil_main.iml" group="xsutil" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/xsutil_test.iml" filepath="$PROJECT_DIR$/.idea/modules/xsutil_test.iml" group="xsutil" />
+    </modules>
+  </component>
+</project>

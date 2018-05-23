@@ -372,10 +372,21 @@ public class BookService extends BaseService<Book,BookDao,String> {
                     return false;
                 }
             }
+            //如果当前章和下一章连续,不定为异常
+            Chapter lastChapter = chapters.get(++i);
+            if(isSerial(currentChapter,lastChapter)){
+                return false;
+            }
 
             return true;
         }
         return false;
+    }
+
+    private boolean isSerial(Chapter one,Chapter twe){
+        int o = FileUtils.getWordNum(one.getCh_ano());
+        int t = FileUtils.getWordNum(twe.getCh_ano());
+        return (t-o)==1;
     }
 
     private String getFromat(String name){

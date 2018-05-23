@@ -5,9 +5,10 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/xsutil
+    url: jdbc:mysql://111.230.99.77:3306/xsutil
+#    url: jdbc:mysql://127.0.0.1:3306/xsutil
     username: root
-    password: kingdee
+    password: 123456
   jpa:
     properties:
       hibernate:
